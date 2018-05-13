@@ -3,6 +3,7 @@ package pack;
 import lejos.remote.ev3.RemoteRequestEV3;
 import lejos.robotics.RegulatedMotor;
 import lejos.utility.Delay;
+import pack.HaendeMotors.HaendeStatus;
 
 
 
@@ -62,6 +63,7 @@ class HaendeMotorsThread extends Thread {
 		FreudeStatus=FREUDEStatus.STOP;
 		
 		ArmeInit();
+		SetMaxSpeed();
 		
 	}
 	
@@ -89,7 +91,7 @@ class HaendeMotorsThread extends Thread {
 	}
 	
 	private void ArmeNachOben(){
-		SetMaxSpeed();
+		
 		linkesArm.synchronizeWith(new RegulatedMotor[] { rechtesArm, linkeHand,  rechteHand});
 		linkesArm.startSynchronization();
 		
@@ -104,7 +106,7 @@ class HaendeMotorsThread extends Thread {
 	}
 	
 	private void ArmeNachUnten(){
-		SetMaxSpeed();
+		
 		linkesArm.synchronizeWith(new RegulatedMotor[] { rechtesArm, linkeHand,  rechteHand});
 		linkesArm.startSynchronization();
 		linkesArm.rotateTo(0,true);
@@ -152,6 +154,18 @@ class HaendeMotorsThread extends Thread {
 					   break;
 				 }
 				
+			if(HaendeMotors.Status == HaendeStatus.TRAUER)
+			{
+				rechtesArm.rotate(-700);
+				rechteHand.rotate(340);
+				for(int i = 0; i <= 1; i++)
+				{
+					rechteHand.rotate(-100);
+					rechteHand.rotate(100);
+				}
+				rechteHand.rotate(-320);
+				rechtesArm.rotate(700);
+			}
 			 
 			 Delay.msDelay(10);
 	        }

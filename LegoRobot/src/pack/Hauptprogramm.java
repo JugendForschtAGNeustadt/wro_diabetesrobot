@@ -1,24 +1,33 @@
 package pack;
 
+import pack.HaendeMotors;
+
+import java.io.IOException;
 
 import lejos.hardware.Button;
 import lejos.hardware.lcd.LCD;
+import lejos.remote.ev3.RemoteRequestEV3;
 import lejos.robotics.subsumption.Arbitrator;
 import lejos.robotics.subsumption.Behavior;
 import lejos.utility.Delay;
 
 
 public class Hauptprogramm {
+	
+	static RemoteRequestEV3 EV3Haende;
+
 
 	static ControlSensors sensors;
 	static Fahren fahren;
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 
 	 fahren = new Fahren();
      sensors = new ControlSensors();
      sensors.setDaemon(true);
      sensors.start();
+ 	EV3Haende = new RemoteRequestEV3("192.168.188.210");
+	HaendeMotors.Init(EV3Haende);
      Behavior b1 = new Antwort();
      Behavior b2 = new Traurig();
      Behavior b3 = new Froehlich();
@@ -107,8 +116,12 @@ class Traurig implements Behavior {
 	  public void action()
 	  {
 	    _suppressed = false;
+	    HaendeMotors.StartTrauer();
+	   Hauptprogramm.fahren.backward(-300);
+	   Delay.msDelay(17000);
+	   Hauptprogramm.fahren.forward(300);
+	   HaendeMotors.Stop();
 
-	   Hauptprogramm.fahren.rotate(-360);
 	    }
 
 	
@@ -140,8 +153,10 @@ class Froehlich implements Behavior {
 	  public void action()
 	  {
 	    _suppressed = false;
-
+        
+	    HaendeMotors.StartFreude();
 	    Hauptprogramm.fahren.rotate(360);
+	    HaendeMotors.Stop();
 	    }
 
 	

@@ -7,6 +7,7 @@ import lejos.robotics.localization.OdometryPoseProvider;
 import lejos.robotics.localization.PoseProvider;
 import lejos.robotics.navigation.ArcRotateMoveController;
 import lejos.robotics.navigation.Pose;
+import lejos.utility.Matrix;
 import lejos.robotics.navigation.MovePilot;
 
 
@@ -18,9 +19,11 @@ public class Fahren {
   ArcRotateMoveController  pilot;
   PoseProvider poseProvider;
   double radius = 300;  
-  double angle = 90;
+  double angle = 360;
   double distance = 1000;
   int time = 4000;
+  int backward = 300;
+  int forward = 300;
  
 
 
@@ -54,6 +57,28 @@ public Fahren() {
           poseProvider = new OdometryPoseProvider(pilot);
           setDefaults();
     }
+
+protected void backward(int backward) 
+{
+	  pilot.setLinearSpeed(pilot.getMaxLinearSpeed()/4);
+	  pilot.setAngularSpeed(pilot.getMaxAngularSpeed()/4);
+
+	//pilot.backward();
+	pilot.travel(-400,true);
+	
+}
+
+protected void forward(int forward)
+{
+	
+	//pilot.forward();
+	pilot.travel(400,true);
+	
+	
+	  pilot.setLinearSpeed(pilot.getMaxLinearSpeed()/2);
+	  pilot.setAngularSpeed(pilot.getMaxAngularSpeed()/2);
+}
+
 public void rotate(int grad)
 {
 	pilot.rotate(grad);
@@ -67,3 +92,4 @@ public void rotate(int grad)
 
 
 }
+
