@@ -56,6 +56,7 @@ public Fahren() {
           radius = Math.max(radius, pilot.getMinRadius());
           poseProvider = new OdometryPoseProvider(pilot);
           setDefaults();
+          endMove();
     }
 
 protected void backward(int backward) 
@@ -64,7 +65,7 @@ protected void backward(int backward)
 	  pilot.setAngularSpeed(pilot.getMaxAngularSpeed()/4);
 
 	//pilot.backward();
-	pilot.travel(-400,true);
+	pilot.travel(-backward,true);
 	
 }
 
@@ -72,7 +73,7 @@ protected void forward(int forward)
 {
 	
 	//pilot.forward();
-	pilot.travel(400,true);
+	pilot.travel(forward,true);
 	
 	
 	  pilot.setLinearSpeed(pilot.getMaxLinearSpeed()/2);
@@ -82,7 +83,6 @@ protected void forward(int forward)
 public void rotate(int grad)
 {
 	pilot.rotate(grad);
-	endMove();
 	
 }
 

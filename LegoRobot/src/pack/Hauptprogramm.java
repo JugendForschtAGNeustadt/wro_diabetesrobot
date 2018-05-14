@@ -1,6 +1,7 @@
 package pack;
 
 import pack.HaendeMotors;
+import pack.HaendeMotors.HaendeStatus;
 
 import java.io.IOException;
 
@@ -15,9 +16,11 @@ import lejos.utility.Delay;
 public class Hauptprogramm {
 	
 	static RemoteRequestEV3 EV3Haende;
+	
 
 
 	static ControlSensors sensors;
+	static HaendeMotors haendeThread;
 	static Fahren fahren;
 	
 	public static void main(String[] args) throws IOException {
@@ -26,8 +29,11 @@ public class Hauptprogramm {
      sensors = new ControlSensors();
      sensors.setDaemon(true);
      sensors.start();
- 	EV3Haende = new RemoteRequestEV3("192.168.188.210");
-	HaendeMotors.Init(EV3Haende);
+ 	 EV3Haende = new RemoteRequestEV3("192.168.188.210");
+ 	 haendeThread = new HaendeMotors(EV3Haende);
+ 	 haendeThread.setDaemon(true);
+ 	 haendeThread.start();
+	
      Behavior b1 = new Antwort();
      Behavior b2 = new Traurig();
      Behavior b3 = new Froehlich();
@@ -116,11 +122,14 @@ class Traurig implements Behavior {
 	  public void action()
 	  {
 	    _suppressed = false;
-	    HaendeMotors.StartTrauer();
-	   Hauptprogramm.fahren.backward(-300);
+	    
+	   Hauptprogramm.haendeThread.StartMove(HaendeStatus.TRAUER);
+	    
+	   Hauptprogramm.fahren.backward(400);
 	   Delay.msDelay(17000);
-	   Hauptprogramm.fahren.forward(300);
-	   HaendeMotors.Stop();
+	   Hauptprogramm.fahren.forward(400);
+	   
+	   Hauptprogramm.haendeThread.StopMove();
 
 	    }
 
@@ -154,9 +163,9 @@ class Froehlich implements Behavior {
 	  {
 	    _suppressed = false;
         
-	    HaendeMotors.StartFreude();
+	    Hauptprogramm.haendeThread.StartMove(HaendeStatus.FREUDE);
 	    Hauptprogramm.fahren.rotate(360);
-	    HaendeMotors.Stop();
+	    Hauptprogramm.haendeThread.StopMove();
 	    }
 
 	

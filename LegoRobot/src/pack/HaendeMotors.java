@@ -3,64 +3,42 @@ package pack;
 import lejos.remote.ev3.RemoteRequestEV3;
 import lejos.robotics.RegulatedMotor;
 import lejos.utility.Delay;
-import pack.HaendeMotors.HaendeStatus;
 
 
 
-public class HaendeMotors {
-	static HaendeMotorsThread motorsThread;
-	static RemoteRequestEV3 remoteEV3;
-	static boolean bIsMoving=false;
-	
-	public enum HaendeStatus {
-		FREUDE, TRAUER, WARTEN, STOP
-	}
-	
-	static HaendeStatus Status = HaendeStatus.STOP;
-	
-	public static void Init(RemoteRequestEV3 EV3){
-		remoteEV3 = EV3;
-		motorsThread = new HaendeMotorsThread();
-		motorsThread.setDaemon(true);
-		motorsThread.start();
-		bIsMoving=false;
-	}
-	
-public static void StartFreude(){
-		Status=HaendeStatus.FREUDE;
-	}
-public static void StartTrauer(){
-	Status=HaendeStatus.TRAUER;
-}
+class HaendeMotors extends Thread {
+	private RemoteRequestEV3 remoteEV3;
 
-public static void StartWarten(){
-	Status=HaendeStatus.WARTEN;
-}
-	
-public static void Stop(){
-	Status = HaendeStatus.STOP;
-	}
-
-public static boolean IsMoving(){
-	return bIsMoving;
-}
-	
-}
-
-class HaendeMotorsThread extends Thread {
 	private RegulatedMotor linkesArm;
 	private RegulatedMotor rechtesArm;
 	private RegulatedMotor linkeHand;
 	private RegulatedMotor rechteHand;
-	
-	private enum FREUDEStatus {
-		START, OBEN, UNTEN, STOP
+
+	public enum HaendeStatus {
+		FREUDE, TRAUER, WARTEN, STOP
 	}
-	private FREUDEStatus FreudeStatus;
+
+	private HaendeStatus Status = HaendeStatus.STOP;
 	
+
+	public synchronized void StartMove(HaendeStatus parStatus){
+		Status=parStatus;
+	}
+
 	
-	HaendeMotorsThread(){
-		FreudeStatus=FREUDEStatus.STOP;
+	public synchronized void StopMove(){
+		Status = HaendeStatus.STOP;
+	}
+
+	private synchronized HaendeStatus getStatus()
+	{
+		return Status;
+	}
+
+		
+	
+	HaendeMotors(RemoteRequestEV3 EV3){
+		remoteEV3= EV3;
 		
 		ArmeInit();
 		SetMaxSpeed();
@@ -68,10 +46,10 @@ class HaendeMotorsThread extends Thread {
 	}
 	
 	private void ArmeInit(){
-		linkesArm = HaendeMotors.remoteEV3.createRegulatedMotor("B", 'L');
-		rechtesArm = HaendeMotors.remoteEV3.createRegulatedMotor("C", 'L');
-		linkeHand = HaendeMotors.remoteEV3.createRegulatedMotor("A", 'M');
-		rechteHand = HaendeMotors.remoteEV3.createRegulatedMotor("D", 'M');
+		linkesArm = remoteEV3.createRegulatedMotor("B", 'L');
+		rechtesArm = remoteEV3.createRegulatedMotor("C", 'L');
+		linkeHand = remoteEV3.createRegulatedMotor("A", 'M');
+		rechteHand = remoteEV3.createRegulatedMotor("D", 'M');
 		
 		linkesArm.resetTachoCount();
 		rechtesArm.resetTachoCount();
@@ -127,34 +105,18 @@ class HaendeMotorsThread extends Thread {
 		
 		 while (true)
 	        {
-			 HaendeMotors.bIsMoving=Arme_IsMoving();
 			 
-			switch (FreudeStatus){
-				 case STOP:
-					 if (HaendeMotors.Status == HaendeMotors.HaendeStatus.FREUDE)
-						 FreudeStatus=FREUDEStatus.START;
-					 break;
-				 case START: 
-					 ArmeNachOben();
-					 FreudeStatus=FREUDEStatus.OBEN;
-				   break;
-				 
-				 case OBEN:
-					 if (!Arme_IsMoving())
-					 {
-						 ArmeNachUnten();
-						 FreudeStatus=FREUDEStatus.UNTEN; 
-					 }
-					break;
-				 case UNTEN:
-					 if (!Arme_IsMoving())
-					 {
-						 FreudeStatus=FREUDEStatus.STOP; 
-					 }
-					   break;
-				 }
+			 
+			 if(getStatus() == HaendeStatus.FREUDE)
+			 {
+				ArmeNachOben();
+				while(Arme_IsMoving());
+				ArmeNachUnten();
+				while(Arme_IsMoving());
+			 }
+			
 				
-			if(HaendeMotors.Status == HaendeStatus.TRAUER)
+			if(getStatus() == HaendeStatus.TRAUER)
 			{
 				rechtesArm.rotate(-700);
 				rechteHand.rotate(340);
