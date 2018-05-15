@@ -37,21 +37,28 @@ public class RobotSocket extends Thread {
 		}
 	}
 	
-	public  synchronized String getMessage() throws InterruptedException
+	public  synchronized String getMessage() throws InterruptedException 
 	{
 		while (!isMessage)
 			wait();
-		isMessage = false;
 		return inMessage;
 		
 	}
 	
-	public  synchronized String getMessage(boolean immediateReturn) throws InterruptedException
+	public  synchronized String getMessage(boolean immediateReturn)
 	{
 		if (immediateReturn)
-			return getMessageNonBlocking();
-		else 
-			return getMessage();
+				return getMessageNonBlocking();
+		else
+		{
+			try {
+				return getMessage();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+			
 	}
 	
 	public  synchronized void sendMessage(String outmessage)
@@ -69,17 +76,20 @@ public class RobotSocket extends Thread {
 	
 	
 	
-	private  synchronized String getMessageNonBlocking() throws InterruptedException
+	private  synchronized String getMessageNonBlocking()
 	{
 		if (isMessage)
 		{
-			isMessage = false;
 			 return inMessage;
-			
 		}
 		else 
 			return null;
 		
+	}
+	
+	public synchronized void setMessageReceived()
+	{
+		isMessage=false;
 	}
 	
 		
