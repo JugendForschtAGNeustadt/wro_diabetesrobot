@@ -20,10 +20,10 @@ public class RobotSocket extends Thread {
 	private InputStream is;
 	private OutputStream os;
 	private ServerSocket ss;
-	public PrintWriter out=null;
-	 public String inMessage="";
-	 public boolean isMessage=false;
-	 public String outMessage="";
+	private PrintWriter out=null;
+	private String inMessage="";
+	private boolean isMessage=false;
+	private String outMessage="";
 	
 
 	RobotSocket(int port)
@@ -37,38 +37,78 @@ public class RobotSocket extends Thread {
 		}
 	}
 	
-	public  synchronized String getMessage() throws InterruptedException
+	public  synchronized String getMessage() throws InterruptedException 
 	{
 		while (!isMessage)
 			wait();
-		isMessage = false;
 		return inMessage;
 		
 	}
 	
-	public  synchronized String getMessageNonBlocking() throws InterruptedException
+	public  synchronized String getMessage(boolean immediateReturn)
+	{
+		if (immediateReturn)
+				return getMessageNonBlocking();
+		else
+		{
+			try {
+				return getMessage();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+			
+	}
+	
+	public  synchronized void sendMessage(String outmessage)
+	{
+		out.println(outmessage);
+	}
+	
+	public  synchronized void sendMessage(String outmessage, boolean noError)
+	{
+		if (noError)
+			outMessage=outmessage;
+		else
+			sendMessage(outmessage);
+	}
+	
+	
+	
+	private  synchronized String getMessageNonBlocking()
 	{
 		if (isMessage)
 		{
-			isMessage = false;
 			 return inMessage;
-			
 		}
 		else 
 			return null;
 		
 	}
 	
-	private synchronized void setIsMessage() {
+	public synchronized void setMessageReceived()
+	{
+		isMessage=false;
+	}
+	
+		
+	private synchronized void setInMessage(String inmessage) {
+		inMessage = inmessage;
 		isMessage=true;
 		notify();
 	}
 	
 	
-	public  synchronized void sendMessage(String outmessage)
-	{
-		out.println(outmessage);
+	
+	
+	private synchronized String getOutMessage() {
+		String copyOutMessage = outMessage;
+		outMessage="";
+		return copyOutMessage;
 	}
+	
+	
 	
 	
 	
@@ -76,7 +116,8 @@ public class RobotSocket extends Thread {
 
 	public  void  run() 
 	{     
-  //  		SocketConnector connector = new SocketConnector();
+		String localOutMessage="";
+		String localInMessage="";
     		
     		try {
     		
@@ -100,10 +141,10 @@ public class RobotSocket extends Thread {
 	        	
 	        	
 	        		System.out.println("Wait for Message...");
-	        		inMessage  = in.readLine();
+	        		localInMessage  = in.readLine();
 	            	
 	            	
-	            	if (inMessage==null)
+	            	if (localInMessage==null)
 	            	{
 	            		
 	            		System.out.println("Null received");
@@ -112,15 +153,16 @@ public class RobotSocket extends Thread {
 	            		break;
 	            	}else {
 	            	
-	            		setIsMessage();
+	            		setInMessage(localInMessage);
 	            		
 	            	}
 	            	
-	            	/*if (RobotSocket.outMessage!="")
+	            	localOutMessage=getOutMessage();
+	            	if (localOutMessage!="")
 	            	{
-	            		out.println(RobotSocket.outMessage);
-	            		RobotSocket.outMessage="";
-	            	}*/
+	            		out.println(localOutMessage);
+	            		
+	            	}
 	            		
 	            	
 	            		            	
@@ -135,7 +177,7 @@ public class RobotSocket extends Thread {
 	    	} 
         	catch (IOException e) 
         	{
-        		//e.printStackTrace(System.out);
+        		e.printStackTrace(System.out);
         	}
     		finally
     		{
@@ -147,7 +189,7 @@ public class RobotSocket extends Thread {
 				}
     		}
     		
-    		//System.out.println("End of RobotSocket Thread!");
+    		System.out.println("End of RobotSocket Thread!");
     		
 	}
 }

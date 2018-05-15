@@ -21,10 +21,10 @@ public class app_test2 {
 		{
 			
 			//Nachricht Empfangen
-			//Wenn null zurückgeliefert ist - keine Nachricht vorhanden
+			//Wenn null zurï¿½ckgeliefert ist - keine Nachricht vorhanden
 			InMessage=rs.getMessage(true);
 			
-			//Überprüfen ob neue Nachricht da war
+			//ï¿½berprï¿½fen ob neue Nachricht da war
 			if (InMessage!=null)
 			{
 				System.out.println("Message received: " + InMessage);
@@ -32,9 +32,10 @@ public class app_test2 {
 				//Vergleichen welche Nachricht gekommen war
 				if(InMessage.contains("ja")||InMessage.contains("nein")) {
 					Delay.msDelay(5000);
+					rs.setMessageReceived();
 					System.out.println("Send: ja");
 					
-					//Nachricht zurück Senden
+					//Nachricht zurï¿½ck Senden
 					rs.sendMessage("ja",true);
 			}
 				
