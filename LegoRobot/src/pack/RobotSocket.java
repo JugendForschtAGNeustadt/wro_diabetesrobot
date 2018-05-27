@@ -21,62 +21,21 @@ public class RobotSocket extends Thread {
 	private OutputStream os;
 	private ServerSocket ss;
 	private PrintWriter out=null;
+	private BufferedReader in=null;
 	private String inMessage="";
 	private boolean isMessage=false;
-	private String outMessage="";
+	private boolean isIOError=false;
 	
 
-	RobotSocket(int port)
+	RobotSocket(int port) throws IOException
 	{
 		
-		try {
-			ss = new ServerSocket(port);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	public  synchronized String getMessage() throws InterruptedException 
-	{
-		while (!isMessage)
-			wait();
-		return inMessage;
+		
+		ss = new ServerSocket(port);
 		
 	}
 	
-	public  synchronized String getMessage(boolean immediateReturn)
-	{
-		if (immediateReturn)
-				return getMessageNonBlocking();
-		else
-		{
-			try {
-				return getMessage();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-				return null;
-			}
-		}
-			
-	}
-	
-	public  synchronized void sendMessage(String outmessage)
-	{
-		out.println(outmessage);
-	}
-	
-	public  synchronized void sendMessage(String outmessage, boolean noError)
-	{
-		if (noError)
-			outMessage=outmessage;
-		else
-			sendMessage(outmessage);
-	}
-	
-	
-	
-	private  synchronized String getMessageNonBlocking()
+	public  synchronized String getMessage()
 	{
 		if (isMessage)
 		{
@@ -84,13 +43,36 @@ public class RobotSocket extends Thread {
 		}
 		else 
 			return null;
-		
 	}
-	
+
 	public synchronized void setMessageReceived()
 	{
 		isMessage=false;
 	}
+	
+	public  synchronized void sendMessage(String outmessage)
+	{
+		try
+		{
+			out.println(outmessage);
+		}
+		catch (Exception e) 
+    	{
+    		e.printStackTrace(System.out);
+    		setIOError();
+    	}
+		
+		
+	}
+
+	public  synchronized String getMessageBlocking() throws InterruptedException 
+	{
+		while (!isMessage)
+			wait();
+		return inMessage;
+		
+	}
+	
 	
 		
 	private synchronized void setInMessage(String inmessage) {
@@ -99,16 +81,17 @@ public class RobotSocket extends Thread {
 		notify();
 	}
 	
-	
-	
-	
-	private synchronized String getOutMessage() {
-		String copyOutMessage = outMessage;
-		outMessage="";
-		return copyOutMessage;
+	private synchronized void setIOError(){
+		isIOError=true;
 	}
 	
+	private synchronized void resetIOError(){
+		isIOError=false;
+	}
 	
+	private synchronized boolean getIOError(){
+		return isIOError;
+	}
 	
 	
 	
@@ -116,12 +99,12 @@ public class RobotSocket extends Thread {
 
 	public  void  run() 
 	{     
-		String localOutMessage="";
 		String localInMessage="";
+		
+		while(true)
+		{
+			try {
     		
-    		try {
-    		
-    			
     			ss.getInetAddress();
 				System.out.println("Wait for Connection: " + InetAddress.getLocalHost().getHostAddress());
     			socket = ss.accept();
@@ -131,65 +114,59 @@ public class RobotSocket extends Thread {
     			System.out.println("Conected!!!");
     			
     			out = new PrintWriter(os, true);
-    			BufferedReader in = new BufferedReader(new InputStreamReader(is));
+    			in = new BufferedReader(new InputStreamReader(is));
     			
-	    		
-	    		
-	    		while (true)
-	    		{
-	    			
-	        	
-	        	
-	        		System.out.println("Wait for Message...");
+				}
+    			catch (IOException e) 
+            	{
+    				e.printStackTrace(System.out);
+    				setIOError();
+            	}
+			
+			while (!getIOError())
+    		{
+    			
+				try{
+					System.out.println("Wait for Message...");
 	        		localInMessage  = in.readLine();
 	            	
 	            	
 	            	if (localInMessage==null)
 	            	{
-	            		
 	            		System.out.println("Null received");
-	            		socket.close();
-	        			ss.close();
+	            		setIOError();
 	            		break;
-	            	}else {
-	            	
+	            	}else
 	            		setInMessage(localInMessage);
-	            		
-	            	}
 	            	
-	            	localOutMessage=getOutMessage();
-	            	if (localOutMessage!="")
-	            	{
-	            		out.println(localOutMessage);
-	            		
-	            	}
-	            		
-	            	
-	            		            	
-	            	
-	            	
-	            	
-	            	
-	            	Delay.msDelay(100);
-	    		}
-	    		
-	    		
-	    	} 
-        	catch (IOException e) 
-        	{
-        		e.printStackTrace(System.out);
-        	}
-    		finally
-    		{
-    			try {
-    				socket.close();
+					
+				}catch (IOException e) 
+            	{
+    				e.printStackTrace(System.out);
+    				setIOError();
+            	}
+        	            	
+            	Delay.msDelay(100);
+    		}
+			
+			if(getIOError())
+			{
+				try {
+					socket.close();
 					ss.close();
 				} catch (IOException e) {
-					e.printStackTrace(System.out);
+					e.printStackTrace();
 				}
-    		}
+				
+				resetIOError();
+			}
+        		
+			
+			
+			
+			
+		}
     		
-    		System.out.println("End of RobotSocket Thread!");
     		
 	}
 }
