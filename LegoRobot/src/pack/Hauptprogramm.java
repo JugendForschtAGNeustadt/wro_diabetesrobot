@@ -12,6 +12,8 @@ import lejos.robotics.subsumption.Arbitrator;
 import lejos.robotics.subsumption.Behavior;
 import lejos.utility.Delay;
 
+enum RobotStatus {FRAGE, ANTWORT, TRAURIG, FROHELIG}
+
 
 public class Hauptprogramm {
 	
@@ -22,6 +24,12 @@ public class Hauptprogramm {
 	static ControlSensors sensors;
 	static HaendeMotors haendeThread;
 	static Fahren fahren;
+	static RobotSocket ComControl;
+	static RobotSocket ComAugen;
+    static String appmessage;
+    static boolean FrageAntwort;
+    static RobotStatus JetzigerStatus;
+   
 	
 	public static void main(String[] args) throws IOException {
 
@@ -33,13 +41,19 @@ public class Hauptprogramm {
  	 haendeThread = new HaendeMotors(EV3Haende);
  	 haendeThread.setDaemon(true);
  	 haendeThread.start();
-	
-     Behavior b1 = new Antwort();
-     Behavior b2 = new Traurig();
-     Behavior b3 = new Froehlich();
+ 	 ComControl = new RobotSocket(8888);
+ 	 ComAugen = new RobotSocket(8889);
+ 	 
+ 	 
+ 	 
+
+     Behavior b1 = new Frage();
+     Behavior b2 = new Antwort();
+     Behavior b3 = new Traurig();
+     Behavior b4 = new Froehlich();
      Behavior[] behaviorList =
      {
-       b1, b2, b3
+       b1, b2, b3, b4
      };
      Arbitrator arbitrator = new Arbitrator(behaviorList);
      LCD.drawString("Sugarman",0,1);
@@ -59,7 +73,27 @@ class Antwort implements Behavior {
 
 	  public boolean takeControl()
 	  {
-	    return true;  // this behavior always wants control.
+		  if(Hauptprogramm.JetzigerStatus==RobotStatus.FRAGE &&
+				  (Hauptprogramm.appmessage.contains("ja")
+				 ||Hauptprogramm.appmessage.contains("nein"))
+			)
+		  {
+			  if(Hauptprogramm.appmessage.contains("ja"))
+			  {
+				  Hauptprogramm.FrageAntwort = true;
+			  }
+			  else
+			  {
+				  Hauptprogramm.FrageAntwort = false;  
+			  }
+			  Hauptprogramm.ComControl.setMessageReceived();
+			  return true;
+		  }
+		  else
+		  {
+			  return false;
+		  }
+		  
 	  }
 
 	  public void suppress()
@@ -70,6 +104,7 @@ class Antwort implements Behavior {
 	  public void action()
 	  {
 	    _suppressed = false;
+	    Hauptprogramm.JetzigerStatus=RobotStatus.ANTWORT;
 	    int zaehler=0;
 	    
 	    while (!_suppressed)
@@ -98,13 +133,52 @@ class Antwort implements Behavior {
 
 }	
 
+
+
+
+class Frage implements Behavior {
+	 private boolean _suppressed = false;
+
+	  public boolean takeControl()
+	  {
+	    return true;  // this behavior always wants control.
+	  }
+
+	  public void suppress()
+	  {
+	    _suppressed = true;// standard practice for suppress methods
+	  }
+
+	  public void action()
+	  {
+		_suppressed = false;
+		Hauptprogramm.JetzigerStatus=RobotStatus.FRAGE;
+	    
+	    while (!_suppressed)
+	    {
+	    	Hauptprogramm.appmessage = Hauptprogramm.ComControl.getMessage();
+	    }
+	      Thread.yield(); //don't exit till suppressed
+	    }
+
+
+
+}	
+
+
+
+
 class Traurig implements Behavior {
 
 	 private boolean _suppressed = false;
 
 	  public boolean takeControl()
 	  {
-        if(Hauptprogramm.sensors.KindPosition == "links" && Hauptprogramm.sensors.KindGeklatscht)
+        if(Hauptprogramm.JetzigerStatus==RobotStatus.ANTWORT &&
+           (Hauptprogramm.sensors.KindPosition == "links" 
+        		&& Hauptprogramm.sensors.KindGeklatscht && Hauptprogramm.FrageAntwort 
+         ||Hauptprogramm.sensors.KindPosition == "rechts" 
+        		&& Hauptprogramm.sensors.KindGeklatscht && !Hauptprogramm.FrageAntwort))
         {
         	return true;
         }
@@ -122,6 +196,7 @@ class Traurig implements Behavior {
 	  public void action()
 	  {
 	    _suppressed = false;
+	    Hauptprogramm.JetzigerStatus=RobotStatus.TRAURIG;
 	    
 	   Hauptprogramm.haendeThread.StartMove(HaendeStatus.TRAUER);
 	    
@@ -144,7 +219,11 @@ class Froehlich implements Behavior {
 
 	  public boolean takeControl()
 	  {
-	    if(Hauptprogramm.sensors.KindPosition == "rechts" && Hauptprogramm.sensors.KindGeklatscht)
+	    if(Hauptprogramm.JetzigerStatus==RobotStatus.ANTWORT &&
+	      (Hauptprogramm.sensors.KindPosition == "links" 
+	      		&& Hauptprogramm.sensors.KindGeklatscht && !Hauptprogramm.FrageAntwort 
+	     ||Hauptprogramm.sensors.KindPosition == "rechts" 
+	     		&& Hauptprogramm.sensors.KindGeklatscht && Hauptprogramm.FrageAntwort))
 	    {
 	    	return true;
 	    }
@@ -162,6 +241,7 @@ class Froehlich implements Behavior {
 	  public void action()
 	  {
 	    _suppressed = false;
+	    Hauptprogramm.JetzigerStatus=RobotStatus.FROHELIG;
         
 	    Hauptprogramm.haendeThread.StartMove(HaendeStatus.FREUDE);
 	    Hauptprogramm.fahren.rotate(360);
