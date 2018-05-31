@@ -5,6 +5,7 @@ import pack.HaendeMotors.HaendeStatus;
 
 import java.io.IOException;
 
+import lejos.hardware.Audio;
 import lejos.hardware.Button;
 import lejos.hardware.lcd.LCD;
 import lejos.remote.ev3.RemoteRequestEV3;
@@ -26,9 +27,9 @@ public class Hauptprogramm {
 	static Fahren fahren;
 	static RobotSocket ComControl;
 	static RobotSocket ComAugen;
-    static String appmessage;
+    static String appmessage=null;
     static boolean FrageAntwort;
-    static RobotStatus JetzigerStatus;
+    static RobotStatus JetzigerStatus=RobotStatus.FRAGE;
    
 	
 	public static void main(String[] args) throws IOException {
@@ -42,7 +43,13 @@ public class Hauptprogramm {
  	 haendeThread.setDaemon(true);
  	 haendeThread.start();
  	 ComControl = new RobotSocket(8888);
- 	 ComAugen = new RobotSocket(8889);
+ 	 //ComAugen = new RobotSocket(8889);
+ 	 
+ 	 ComControl.setDaemon(true);
+ 	 ComControl.start();
+ 	 
+ 	 //ComAugen.setDaemon(true);
+ 	 //ComAugen.start();
  	 
  	 
  	 
@@ -73,26 +80,29 @@ class Antwort implements Behavior {
 
 	  public boolean takeControl()
 	  {
-		  if(Hauptprogramm.JetzigerStatus==RobotStatus.FRAGE &&
-				  (Hauptprogramm.appmessage.contains("ja")
-				 ||Hauptprogramm.appmessage.contains("nein"))
-			)
-		  {
-			  if(Hauptprogramm.appmessage.contains("ja"))
+		  if (Hauptprogramm.appmessage!=null)
+			  if(Hauptprogramm.JetzigerStatus==RobotStatus.FRAGE &&
+					  (Hauptprogramm.appmessage.contains("ja")
+					 ||Hauptprogramm.appmessage.contains("nein"))
+				)
 			  {
-				  Hauptprogramm.FrageAntwort = true;
+				  if(Hauptprogramm.appmessage.contains("ja"))
+				  {
+					  Hauptprogramm.FrageAntwort = true;
+				  }
+				  else
+				  {
+					  Hauptprogramm.FrageAntwort = false;  
+				  }
+				  Hauptprogramm.ComControl.setMessageReceived();
+				  return true;
 			  }
 			  else
 			  {
-				  Hauptprogramm.FrageAntwort = false;  
+				  return false;
 			  }
-			  Hauptprogramm.ComControl.setMessageReceived();
-			  return true;
-		  }
 		  else
-		  {
 			  return false;
-		  }
 		  
 	  }
 
@@ -153,12 +163,14 @@ class Frage implements Behavior {
 	  {
 		_suppressed = false;
 		Hauptprogramm.JetzigerStatus=RobotStatus.FRAGE;
+		Hauptprogramm.appmessage=null;
 	    
 	    while (!_suppressed)
 	    {
 	    	Hauptprogramm.appmessage = Hauptprogramm.ComControl.getMessage();
 	    }
-	      Thread.yield(); //don't exit till suppressed
+	    
+	      
 	    }
 
 
@@ -242,10 +254,12 @@ class Froehlich implements Behavior {
 	  {
 	    _suppressed = false;
 	    Hauptprogramm.JetzigerStatus=RobotStatus.FROHELIG;
-        
+		   Hauptprogramm.fahren.backward(200);
+		   Delay.msDelay(3000);
 	    Hauptprogramm.haendeThread.StartMove(HaendeStatus.FREUDE);
 	    Hauptprogramm.fahren.rotate(360);
 	    Hauptprogramm.haendeThread.StopMove();
+		   Hauptprogramm.fahren.forward(200);
 	    }
 
 	

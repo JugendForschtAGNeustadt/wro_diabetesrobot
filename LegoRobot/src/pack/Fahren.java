@@ -61,8 +61,8 @@ public Fahren() {
 
 protected void backward(int backward) 
 {
-	  pilot.setLinearSpeed(pilot.getMaxLinearSpeed()/4);
-	  pilot.setAngularSpeed(pilot.getMaxAngularSpeed()/4);
+	 // pilot.setLinearSpeed(pilot.getMaxLinearSpeed()/4);
+	 // pilot.setAngularSpeed(pilot.getMaxAngularSpeed()/4);
 
 	//pilot.backward();
 	pilot.travel(-backward,true);

@@ -25,13 +25,14 @@ public class RobotSocket extends Thread {
 	private String inMessage="";
 	private boolean isMessage=false;
 	private boolean isIOError=false;
+	private int port;
 	
 
-	RobotSocket(int port) throws IOException
+	RobotSocket(int inport) throws IOException
 	{
 		
 		
-		ss = new ServerSocket(port);
+		port=inport;
 		
 	}
 	
@@ -104,7 +105,7 @@ public class RobotSocket extends Thread {
 		while(true)
 		{
 			try {
-    		
+				ss = new ServerSocket(port);
     			ss.getInetAddress();
 				System.out.println("Wait for Connection: " + InetAddress.getLocalHost().getHostAddress());
     			socket = ss.accept();
