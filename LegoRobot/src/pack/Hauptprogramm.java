@@ -208,6 +208,16 @@ class Traurig implements Behavior {
 	  public void action()
 	  {
 	    _suppressed = false;
+	    if(Hauptprogramm.FrageAntwort)
+	    {
+	    	 Hauptprogramm.ComControl.sendMessage("NEIN"); 	
+	    }
+	    else
+	    {
+	    	 Hauptprogramm.ComControl.sendMessage("JA");
+	    }
+	   
+	    
 	    Hauptprogramm.JetzigerStatus=RobotStatus.TRAURIG;
 	    
 	   Hauptprogramm.haendeThread.StartMove(HaendeStatus.TRAUER);
@@ -253,6 +263,15 @@ class Froehlich implements Behavior {
 	  public void action()
 	  {
 	    _suppressed = false;
+	    if(!Hauptprogramm.FrageAntwort)
+	    {
+	    	 Hauptprogramm.ComControl.sendMessage("NEIN"); 	
+	    }
+	    else
+	    {
+	    	 Hauptprogramm.ComControl.sendMessage("JA");
+	    }
+	    
 	    Hauptprogramm.JetzigerStatus=RobotStatus.FROHELIG;
 		   Hauptprogramm.fahren.backward(200);
 		   Delay.msDelay(3000);
