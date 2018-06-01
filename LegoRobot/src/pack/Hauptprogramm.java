@@ -43,13 +43,13 @@ public class Hauptprogramm {
  	 haendeThread.setDaemon(true);
  	 haendeThread.start();
  	 ComControl = new RobotSocket(8888);
- 	 //ComAugen = new RobotSocket(8889);
+ 	 ComAugen = new RobotSocket(8889);
  	 
  	 ComControl.setDaemon(true);
  	 ComControl.start();
  	 
- 	 //ComAugen.setDaemon(true);
- 	 //ComAugen.start();
+ 	 ComAugen.setDaemon(true);
+ 	 ComAugen.start();
  	 
  	 
  	 
@@ -216,7 +216,7 @@ class Traurig implements Behavior {
 	    {
 	    	 Hauptprogramm.ComControl.sendMessage("JA");
 	    }
-	   
+	    Hauptprogramm.ComAugen.sendMessage("traurig");
 	    
 	    Hauptprogramm.JetzigerStatus=RobotStatus.TRAURIG;
 	    
@@ -271,10 +271,10 @@ class Froehlich implements Behavior {
 	    {
 	    	 Hauptprogramm.ComControl.sendMessage("JA");
 	    }
-	    
+	    Hauptprogramm.ComAugen.sendMessage("freude");
 	    Hauptprogramm.JetzigerStatus=RobotStatus.FROHELIG;
 		   Hauptprogramm.fahren.backward(200);
-		   Delay.msDelay(3000);
+		   Delay.msDelay(1500);
 	    Hauptprogramm.haendeThread.StartMove(HaendeStatus.FREUDE);
 	    Hauptprogramm.fahren.rotate(360);
 	    Hauptprogramm.haendeThread.StopMove();
