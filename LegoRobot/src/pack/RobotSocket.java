@@ -26,6 +26,7 @@ public class RobotSocket extends Thread {
 	private boolean isMessage=false;
 	private boolean isIOError=false;
 	private int port;
+	private boolean isConnected=false;
 	
 
 	RobotSocket(int inport) throws IOException
@@ -55,7 +56,8 @@ public class RobotSocket extends Thread {
 	{
 		try
 		{
-			out.println(outmessage);
+			if (isConnected)
+				out.println(outmessage);
 		}
 		catch (Exception e) 
     	{
@@ -94,6 +96,12 @@ public class RobotSocket extends Thread {
 		return isIOError;
 	}
 	
+	private synchronized void setConnected(boolean bConnected){
+		isConnected=bConnected;
+	}
+	
+	
+	
 	
 	
 	
@@ -115,7 +123,8 @@ public class RobotSocket extends Thread {
     			System.out.println("Conected!!!");
     			
     			out = new PrintWriter(os, true);
-    			in = new BufferedReader(new InputStreamReader(is));
+				in = new BufferedReader(new InputStreamReader(is));
+				setConnected(true);
     			
 				}
     			catch (IOException e) 
@@ -153,6 +162,7 @@ public class RobotSocket extends Thread {
 			if(getIOError())
 			{
 				try {
+					setConnected(false);
 					socket.close();
 					ss.close();
 				} catch (IOException e) {
