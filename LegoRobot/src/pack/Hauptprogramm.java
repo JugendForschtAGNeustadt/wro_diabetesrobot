@@ -6,6 +6,8 @@ import pack.HaendeMotors.HaendeStatus;
 import java.io.IOException;
 
 import lejos.hardware.Audio;
+import lejos.hardware.BrickFinder;
+import lejos.hardware.BrickInfo;
 import lejos.hardware.Button;
 import lejos.hardware.lcd.LCD;
 import lejos.remote.ev3.RemoteRequestEV3;
@@ -38,7 +40,8 @@ public class Hauptprogramm {
      sensors = new ControlSensors();
      sensors.setDaemon(true);
      sensors.start();
- 	 EV3Haende = new RemoteRequestEV3("192.168.188.210");
+ 	 //EV3Haende = new RemoteRequestEV3("192.168.188.210");
+ 	 EV3Haende = new RemoteRequestEV3(MyFindEV3IP("HAENDE2"));
  	 haendeThread = new HaendeMotors(EV3Haende);
  	 haendeThread.setDaemon(true);
  	 haendeThread.start();
@@ -71,6 +74,20 @@ public class Hauptprogramm {
      arbitrator.go();
      
 	}
+	
+	 static String MyFindEV3IP(String EV3Name){
+		    BrickInfo[] bricks = BrickFinder.discover();
+			for (BrickInfo brick: bricks)
+			{
+				System.out.println("EV3 Brick: " + brick.getIPAddress() + " " + brick.getName() + " " + brick.getType());
+				if (brick.getName().contains(EV3Name))
+					return brick.getIPAddress();
+				
+			}
+			 
+			 return "";
+	}
+
 
 }
 
