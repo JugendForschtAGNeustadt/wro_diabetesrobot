@@ -106,12 +106,15 @@ class Antwort implements Behavior {
 				  if(Hauptprogramm.appmessage.contains("ja"))
 				  {
 					  Hauptprogramm.FrageAntwort = true;
+					  System.out.println("FrageAntwort = true");
 				  }
 				  else
 				  {
-					  Hauptprogramm.FrageAntwort = false;  
+					  Hauptprogramm.FrageAntwort = false; 
+					  System.out.println("FrageAntwort = false");
 				  }
 				  Hauptprogramm.ComControl.setMessageReceived();
+				  System.out.println("Antwort.takeControl=true");
 				  return true;
 			  }
 			  else
@@ -131,6 +134,7 @@ class Antwort implements Behavior {
 	  public void action()
 	  {
 	    _suppressed = false;
+	    System.out.println("JetzigerStatus=RobotStatus.ANTWORT");
 	    Hauptprogramm.JetzigerStatus=RobotStatus.ANTWORT;
 	    int zaehler=0;
 	    
@@ -180,6 +184,7 @@ class Frage implements Behavior {
 	  {
 		_suppressed = false;
 		Hauptprogramm.JetzigerStatus=RobotStatus.FRAGE;
+		System.out.println("JetzigerStatus=RobotStatus.FRAGE");
 		Hauptprogramm.appmessage=null;
 	    
 	    while (!_suppressed)
@@ -225,6 +230,9 @@ class Traurig implements Behavior {
 	  public void action()
 	  {
 	    _suppressed = false;
+	    Hauptprogramm.JetzigerStatus=RobotStatus.TRAURIG;
+	    System.out.println("JetzigerStatus=RobotStatus.TRAURIG");
+	    
 	    if(Hauptprogramm.FrageAntwort)
 	    {
 	    	 Hauptprogramm.ComControl.sendMessage("NEIN"); 	
@@ -235,7 +243,7 @@ class Traurig implements Behavior {
 	    }
 	    Hauptprogramm.ComAugen.sendMessage("traurig");
 	    
-	    Hauptprogramm.JetzigerStatus=RobotStatus.TRAURIG;
+	 
 	    
 	   Hauptprogramm.haendeThread.StartMove(HaendeStatus.TRAUER);
 	    
@@ -280,6 +288,9 @@ class Froehlich implements Behavior {
 	  public void action()
 	  {
 	    _suppressed = false;
+	    Hauptprogramm.JetzigerStatus=RobotStatus.FROHELIG;
+	    System.out.println("JetzigerStatus=RobotStatus.FROHELIG");
+	    
 	    if(!Hauptprogramm.FrageAntwort)
 	    {
 	    	 Hauptprogramm.ComControl.sendMessage("NEIN"); 	
@@ -289,7 +300,7 @@ class Froehlich implements Behavior {
 	    	 Hauptprogramm.ComControl.sendMessage("JA");
 	    }
 	    Hauptprogramm.ComAugen.sendMessage("freude");
-	    Hauptprogramm.JetzigerStatus=RobotStatus.FROHELIG;
+	    
 		   Hauptprogramm.fahren.backward(200);
 		   Delay.msDelay(1500);
 	    Hauptprogramm.haendeThread.StartMove(HaendeStatus.FREUDE);

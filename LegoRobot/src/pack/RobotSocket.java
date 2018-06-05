@@ -44,7 +44,7 @@ public class RobotSocket extends Thread {
 			 return inMessage;
 		}
 		else 
-			return null;
+			return "";
 	}
 
 	public synchronized void setMessageReceived()
@@ -147,7 +147,10 @@ public class RobotSocket extends Thread {
 	            		setIOError();
 	            		break;
 	            	}else
+	            	{
+	            		System.out.println("Received: " + localInMessage);
 	            		setInMessage(localInMessage);
+	            	}
 	            	
 					
 				}catch (IOException e) 
