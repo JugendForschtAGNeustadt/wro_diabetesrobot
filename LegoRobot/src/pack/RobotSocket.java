@@ -41,23 +41,36 @@ public class RobotSocket extends Thread {
 	{
 		if (isMessage)
 		{
+			System.out.println("***************************************  getMessage():"+inMessage);
 			 return inMessage;
 		}
-		else 
+		else
+		{
 			return "";
+
+		} 
+			
 	}
 
 	public synchronized void setMessageReceived()
 	{
+		System.out.println("setMessageReceived()");
 		isMessage=false;
 	}
 	
 	public  synchronized void sendMessage(String outmessage)
 	{
+		System.out.println("sendMessage():" + outmessage);
 		try
 		{
 			if (isConnected)
+			{
 				out.println(outmessage);
+				System.out.println("sendMessage() message sent: " + outmessage);
+			}
+			else
+			  System.out.println("sendMessage():No connection");
+				
 		}
 		catch (Exception e) 
     	{
