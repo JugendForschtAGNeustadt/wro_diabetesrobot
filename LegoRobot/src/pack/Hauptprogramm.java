@@ -29,7 +29,6 @@ public class Hauptprogramm {
 	static Fahren fahren;
 	static RobotSocket ComControl;
 	static RobotSocket ComAugen;
-    static String appmessage=null;
     static boolean FrageAntwort;
     static RobotStatus JetzigerStatus=RobotStatus.FRAGE;
    
@@ -40,7 +39,6 @@ public class Hauptprogramm {
      sensors = new ControlSensors();
      sensors.setDaemon(true);
      sensors.start();
- 	 //EV3Haende = new RemoteRequestEV3("192.168.188.210");
  	 EV3Haende = new RemoteRequestEV3(MyFindEV3IP("HAENDE2"));
  	 haendeThread = new HaendeMotors(EV3Haende);
  	 haendeThread.setDaemon(true);
@@ -91,35 +89,70 @@ public class Hauptprogramm {
 
 }
 
+class Frage implements Behavior {
+	 private boolean _suppressed = false;
+
+	  public boolean takeControl()
+	  {
+		
+		
+	    return true;  // this behavior always wants control.
+	  }
+
+	  public void suppress()
+	  {
+	    _suppressed = true;// standard practice for suppress methods
+	  }
+
+	  public void action()
+	  {
+		_suppressed = false;
+		
+		//System.out.println("***************************************  Frage.action():START");
+		Hauptprogramm.JetzigerStatus=RobotStatus.FRAGE;
+	      
+	    }
+
+
+
+}	
+
 
 class Antwort implements Behavior {
 	 private boolean _suppressed = false;
 
 	  public boolean takeControl()
 	  {
-		  if (Hauptprogramm.appmessage!=null)
+		  
+		 
+			  
+		  String sAppMessage = Hauptprogramm.ComControl.getMessage();
+			  
 			  if(Hauptprogramm.JetzigerStatus==RobotStatus.FRAGE &&
-					  (Hauptprogramm.appmessage.contains("ja")
-					 ||Hauptprogramm.appmessage.contains("nein"))
+					  (sAppMessage.contains("ja")
+					 ||sAppMessage.contains("nein"))
 				)
 			  {
-				  if(Hauptprogramm.appmessage.contains("ja"))
+				  if(sAppMessage.contains("ja"))
 				  {
 					  Hauptprogramm.FrageAntwort = true;
+					  System.out.println("FrageAntwort = true");
 				  }
 				  else
 				  {
-					  Hauptprogramm.FrageAntwort = false;  
+					  Hauptprogramm.FrageAntwort = false; 
+					  System.out.println("FrageAntwort = false");
 				  }
-				  Hauptprogramm.ComControl.setMessageReceived();
+				  System.out.println("Antwort.takeControl=true");
+				 
+				  
+				  
 				  return true;
 			  }
 			  else
 			  {
 				  return false;
 			  }
-		  else
-			  return false;
 		  
 	  }
 
@@ -131,7 +164,10 @@ class Antwort implements Behavior {
 	  public void action()
 	  {
 	    _suppressed = false;
+	    System.out.println("***************************************  Antwort.action():START");
 	    Hauptprogramm.JetzigerStatus=RobotStatus.ANTWORT;
+	    Hauptprogramm.ComControl.setMessageReceived();
+	   
 	    int zaehler=0;
 	    
 	    while (!_suppressed)
@@ -152,63 +188,41 @@ class Antwort implements Behavior {
 	    	LCD.drawString("Kind ist nicht da", 0, 3);
 	    LCD.drawString("Lautstaerke: " + Hauptprogramm.sensors.lautstaerke, 0, 4);
 	    Delay.msDelay(100);	
-	        }
-	      Thread.yield(); //don't exit till suppressed
 	    }
-
-
-
-}	
-
-
-
-
-class Frage implements Behavior {
-	 private boolean _suppressed = false;
-
-	  public boolean takeControl()
-	  {
-	    return true;  // this behavior always wants control.
-	  }
-
-	  public void suppress()
-	  {
-	    _suppressed = true;// standard practice for suppress methods
-	  }
-
-	  public void action()
-	  {
-		_suppressed = false;
-		Hauptprogramm.JetzigerStatus=RobotStatus.FRAGE;
-		Hauptprogramm.appmessage=null;
-	    
-	    while (!_suppressed)
-	    {
-	    	Hauptprogramm.appmessage = Hauptprogramm.ComControl.getMessage();
-	    }
-	    
+	      Thread.yield(); 
 	      
-	    }
+	      System.out.println("Antwort.action():ENDE");
+		}
+		
 
 
 
 }	
+
+
+
+
+
 
 
 
 
 class Traurig implements Behavior {
 
-	 private boolean _suppressed = false;
-
+	
 	  public boolean takeControl()
 	  {
         if(Hauptprogramm.JetzigerStatus==RobotStatus.ANTWORT &&
            (Hauptprogramm.sensors.KindPosition == "links" 
         		&& Hauptprogramm.sensors.KindGeklatscht && Hauptprogramm.FrageAntwort 
          ||Hauptprogramm.sensors.KindPosition == "rechts" 
-        		&& Hauptprogramm.sensors.KindGeklatscht && !Hauptprogramm.FrageAntwort))
+        		&& Hauptprogramm.sensors.KindGeklatscht && !Hauptprogramm.FrageAntwort)
+           
+           || Hauptprogramm.JetzigerStatus==RobotStatus.TRAURIG)
         {
+        	
+        	Hauptprogramm.JetzigerStatus=RobotStatus.TRAURIG;
+			System.out.println("Traurig.takeControl=true");
         	return true;
         }
         else
@@ -219,12 +233,17 @@ class Traurig implements Behavior {
 
 	  public void suppress()
 	  {
-	    _suppressed = true;// standard practice for suppress methods
+	    
 	  }
 
 	  public void action()
 	  {
-	    _suppressed = false;
+		
+		System.out.println("***************************************  Traurig.action(): START");
+		Hauptprogramm.JetzigerStatus=RobotStatus.TRAURIG;
+		System.out.println("JetzigerStatus=RobotStatus.TRAURIG");
+	    
+	    
 	    if(Hauptprogramm.FrageAntwort)
 	    {
 	    	 Hauptprogramm.ComControl.sendMessage("NEIN"); 	
@@ -235,7 +254,7 @@ class Traurig implements Behavior {
 	    }
 	    Hauptprogramm.ComAugen.sendMessage("traurig");
 	    
-	    Hauptprogramm.JetzigerStatus=RobotStatus.TRAURIG;
+	 
 	    
 	   Hauptprogramm.haendeThread.StartMove(HaendeStatus.TRAUER);
 	    
@@ -244,6 +263,10 @@ class Traurig implements Behavior {
 	   Hauptprogramm.fahren.forward(400);
 	   
 	   Hauptprogramm.haendeThread.StopMove();
+
+	   System.out.println("Traurig.action(): ENDE");
+	   
+	   Hauptprogramm.JetzigerStatus=RobotStatus.FRAGE;
 
 	    }
 
@@ -254,7 +277,7 @@ class Traurig implements Behavior {
 
 class Froehlich implements Behavior {
 
-	 private boolean _suppressed = false;
+	
 
 	  public boolean takeControl()
 	  {
@@ -262,8 +285,12 @@ class Froehlich implements Behavior {
 	      (Hauptprogramm.sensors.KindPosition == "links" 
 	      		&& Hauptprogramm.sensors.KindGeklatscht && !Hauptprogramm.FrageAntwort 
 	     ||Hauptprogramm.sensors.KindPosition == "rechts" 
-	     		&& Hauptprogramm.sensors.KindGeklatscht && Hauptprogramm.FrageAntwort))
+	     		&& Hauptprogramm.sensors.KindGeklatscht && Hauptprogramm.FrageAntwort)
+	      
+	    		|| Hauptprogramm.JetzigerStatus==RobotStatus.FROHELIG)
 	    {
+			System.out.println("Froehlich.takeControl=true");
+			Hauptprogramm.JetzigerStatus=RobotStatus.FROHELIG;
 	    	return true;
 	    }
 	    else
@@ -274,12 +301,18 @@ class Froehlich implements Behavior {
 
 	  public void suppress()
 	  {
-	    _suppressed = true;// standard practice for suppress methods
+	    
 	  }
 
 	  public void action()
 	  {
-	    _suppressed = false;
+		
+		System.out.println("***************************************  Froehlich.action(): START");
+		Hauptprogramm.JetzigerStatus=RobotStatus.FROHELIG;
+		System.out.println("JetzigerStatus=RobotStatus.FROHELIG");
+
+	   
+	    
 	    if(!Hauptprogramm.FrageAntwort)
 	    {
 	    	 Hauptprogramm.ComControl.sendMessage("NEIN"); 	
@@ -289,13 +322,16 @@ class Froehlich implements Behavior {
 	    	 Hauptprogramm.ComControl.sendMessage("JA");
 	    }
 	    Hauptprogramm.ComAugen.sendMessage("freude");
-	    Hauptprogramm.JetzigerStatus=RobotStatus.FROHELIG;
+	    
 		   Hauptprogramm.fahren.backward(200);
 		   Delay.msDelay(1500);
 	    Hauptprogramm.haendeThread.StartMove(HaendeStatus.FREUDE);
 	    Hauptprogramm.fahren.rotate(360);
 	    Hauptprogramm.haendeThread.StopMove();
 		   Hauptprogramm.fahren.forward(200);
+		   System.out.println("Froehlich.action(): ENDE");
+		   
+		   Hauptprogramm.JetzigerStatus=RobotStatus.FRAGE;
 	    }
 
 	

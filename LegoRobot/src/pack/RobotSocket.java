@@ -26,6 +26,7 @@ public class RobotSocket extends Thread {
 	private boolean isMessage=false;
 	private boolean isIOError=false;
 	private int port;
+	private boolean isConnected=false;
 	
 
 	RobotSocket(int inport) throws IOException
@@ -40,22 +41,36 @@ public class RobotSocket extends Thread {
 	{
 		if (isMessage)
 		{
+			System.out.println("***************************************  getMessage():"+inMessage);
 			 return inMessage;
 		}
-		else 
-			return null;
+		else
+		{
+			return "";
+
+		} 
+			
 	}
 
 	public synchronized void setMessageReceived()
 	{
+		System.out.println("setMessageReceived()");
 		isMessage=false;
 	}
 	
 	public  synchronized void sendMessage(String outmessage)
 	{
+		System.out.println("sendMessage():" + outmessage);
 		try
 		{
-			out.println(outmessage);
+			if (isConnected)
+			{
+				out.println(outmessage);
+				System.out.println("sendMessage() message sent: " + outmessage);
+			}
+			else
+			  System.out.println("sendMessage():No connection");
+				
 		}
 		catch (Exception e) 
     	{
@@ -94,6 +109,12 @@ public class RobotSocket extends Thread {
 		return isIOError;
 	}
 	
+	private synchronized void setConnected(boolean bConnected){
+		isConnected=bConnected;
+	}
+	
+	
+	
 	
 	
 	
@@ -115,7 +136,8 @@ public class RobotSocket extends Thread {
     			System.out.println("Conected!!!");
     			
     			out = new PrintWriter(os, true);
-    			in = new BufferedReader(new InputStreamReader(is));
+				in = new BufferedReader(new InputStreamReader(is));
+				setConnected(true);
     			
 				}
     			catch (IOException e) 
@@ -138,7 +160,10 @@ public class RobotSocket extends Thread {
 	            		setIOError();
 	            		break;
 	            	}else
+	            	{
+	            		System.out.println("Received: " + localInMessage);
 	            		setInMessage(localInMessage);
+	            	}
 	            	
 					
 				}catch (IOException e) 
@@ -153,6 +178,7 @@ public class RobotSocket extends Thread {
 			if(getIOError())
 			{
 				try {
+					setConnected(false);
 					socket.close();
 					ss.close();
 				} catch (IOException e) {
