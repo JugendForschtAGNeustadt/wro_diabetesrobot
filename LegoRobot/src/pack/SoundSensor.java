@@ -14,7 +14,9 @@ public class SoundSensor {
 	    SoundSensor(Port port)
 	    {
 	    	ir = new NXTSoundSensor(port);
-	    	sp = ir.getDBMode();
+	    	//sp = ir.getDBMode();
+	    	sp = ir.getDBAMode();
+	    	
 	    	sf = new MaximumFilter(sp,50);
 	    	sample = new float[sp.sampleSize()];
 	    	

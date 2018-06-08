@@ -73,7 +73,7 @@ public class ControlSensors extends Thread{
 	        
 	        lautstaerke = Lautstaerke;
 	        
-	        if(Lautstaerke >=20){
+	        if(Lautstaerke >=40){
 	        	KindGeklatscht=true;
 	        }else{
 	        	KindGeklatscht=false;
